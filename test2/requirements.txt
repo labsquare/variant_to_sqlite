@@ -1,0 +1,7 @@
+appdirs==1.4.0
+begins==0.9
+packaging==16.8
+peewee==2.8.5
+pyparsing==2.1.10
+PyVCF==0.6.8
+six==1.10.0
