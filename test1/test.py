@@ -23,19 +23,47 @@ for info in reader.infos:
 			new_col = peewee.CharField(null=True)
 			new_col.add_to_class(Annotation, key)
 		# Create annotation table
-		Annotation.create_table()
+	else:
+		key = info 
+		f   = Field(colname = key, desc = reader.infos[info].desc)
+		f.save()
+		new_col = peewee.CharField(null=True)
+		new_col.add_to_class(Annotation, key)
+
+	
+
+Annotation.create_table()
+
 
 # IMPORT VARIANT AND ANNOTATION DATA
 with db.transaction():
 	for record in reader:
-		variant = Variant.create(chrom = record.CHROM, pos = record.POS, ref = record.REF, alt = record.ALT[0] )
-		if "ANN" in record.INFO:
-			ann = record.INFO["ANN"]
-			m = Annotation()
-			m.variant = variant
-			i = 1
-			for value in ann[0].split("|"):
-				key = "ANN_"+str(i)
-				setattr(m,key,value)
-				i+=1
-			m.save()
+		for alt_i in range(len(record.ALT)):
+			variant = Variant.create(chrom = record.CHROM, pos = record.POS, ref = record.REF, alt = record.ALT[alt_i] )
+			if "ANN" in record.INFO:
+				ann = record.INFO["ANN"]
+				m   = Annotation()
+				m.variant = variant
+				i = 1
+				for value in ann[0].split("|"):
+					key = "ANN_"+str(i)
+					setattr(m,key,value)
+					i+=1
+				m.save()
+			else:
+				m   = Annotation()
+				m.variant = variant
+				for key in record.INFO.keys():
+					if isinstance(record.INFO[key], list):
+						if len(record.ALT) == len(record.INFO[key]):
+							setattr(m,key, record.INFO[key][alt_i])
+						else:
+							setattr(m,key, record.INFO[key][0])
+
+					else:
+						setattr(m,key, record.INFO[key])
+
+
+				m.save()
+					
+
